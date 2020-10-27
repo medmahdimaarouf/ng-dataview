@@ -1,0 +1,9 @@
+.dt-sort-up{
+    background-image:url("dt-sort-up.svg");
+}
+.dt-sort-down{
+    background-image: url("dt-sort-down.svg");
+}
+.dt-sort{
+    background-image: url("dt-sort.svg");
+}
