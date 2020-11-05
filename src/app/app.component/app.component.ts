@@ -34,6 +34,7 @@ export class AppComponent {
     email: "email2",
     tel: "tel2"
   }]
+  data2 = [["nnnn", "nnnnnbbb", "kkkkkk", "uuuuu", "ooooo"]]
 
   constructor() {
 

@@ -67,19 +67,19 @@ export class ColumnDirective implements AfterViewInit {
     if (!value) return;
     if (this.title_wrapper) this.title_wrapper.innerText = value.toString();
     else if (this._element) {
-      console.log("value1", value);
+      // console.log("value1", value);
 
       var clstw = this._element.getElementsByClassName("dt-title")
       if (clstw.length > 0) {
-        console.log("element by clases title");
+        //  console.log("element by clases title");
         for (var i in clstw) {
           var elm = clstw[i];
-          console.log("test", elm)
+          //  console.log("test", elm)
           this.render.appendChild(elm, this.render.createText(value.toString()));
         }
       }
       else {
-        console.log(value);
+        // console.log(value);
         this.render.appendChild(this._element, this.render.createText(value.toString()));
       }
     }
