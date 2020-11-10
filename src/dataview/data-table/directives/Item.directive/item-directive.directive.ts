@@ -1,5 +1,4 @@
-import { Directive, ViewChild, QueryList, ElementRef, ViewChildren, EmbeddedViewRef, EventEmitter } from '@angular/core';
-import { ViewItem } from 'src/dataview/ViewItem/ViewItem';
+import { Directive, QueryList, ElementRef, ViewChildren } from '@angular/core';
 
 @Directive({
   selector: '[dt-item]'

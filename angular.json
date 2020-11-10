@@ -28,7 +28,9 @@
               "node_modules/metro4/build/css/metro-all.min.css",
               "src/assets/style.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/metro4/build/js/metro.min.js"
+            ]
           },
           "configurations": {
             "production": {

@@ -13,7 +13,7 @@ export class DataSet {
     reset() {
         this.viewModel.clear();
         this._items.forEach((item, i) => {
-            item.selected = false;
+            item.getAction("select").state = false;
         })
         this.viewModel.model = this._items;
     }
@@ -39,7 +39,7 @@ export class DataSet {
     get selectedItems() {
         var items = [];
         this._items.forEach((item, i) => {
-            if (item.selected) items.push(item.data);
+            if (item.getAction("select")) items.push(item.data);
         });
         return items;
     }

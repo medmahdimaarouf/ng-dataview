@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
-import { DataViewModule } from "../../dataview/data-view.module"
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { DataTableDirective } from 'src/dataview/data-table/data-table.directive';
+import { PaginatorDirective } from 'src/dataview/Paginator/paginator.directive/paginator.directive';
 @Component({
   selector: 'app-root',
   templateUrl: './web/app.component.html',
   styleUrls: ['./web/app.component.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
   title = 'dataview';
   headers = [
@@ -35,8 +36,13 @@ export class AppComponent {
     tel: "tel2"
   }]
   data2 = [["nnnn", "nnnnnbbb", "kkkkkk", "uuuuu", "ooooo"]]
-
+  @ViewChild(DataTableDirective) dataTable: DataTableDirective;
+  @ViewChild(PaginatorDirective) paginator: PaginatorDirective;
   constructor() {
 
+  }
+  ngOnInit() {
+    console.debug(this.dataTable, this.paginator);
+    this.dataTable.paginator = this.paginator;
   }
 }

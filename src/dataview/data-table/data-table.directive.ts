@@ -1,81 +1,82 @@
 import { Directive, ViewChild, ElementRef, Input, Output, EventEmitter, ViewChildren, QueryList, ContentChildren, Renderer2, OnInit, EmbeddedViewRef, TemplateRef, ViewContainerRef } from '@angular/core';
-import { ColumnDirective } from './Column.directive/colum.directive';
+import { ColumnDirective } from './directives/Column.directive/colum.directive';
 import { DataSet } from '../DataSet/data-set';
 import { ViewModel } from '../ViewModel/ViewModel';
 import { Paginator } from '../Paginator/paginator';
-import { ActionEvent, ViewItem, ViewItemAction } from '../ViewItem/ViewItem';
+import { ViewItem, ViewItemAction } from '../ViewItem/ViewItem';
 import { AjaxService, AjaxSettings } from '../Ajax/ajax.service';
 
 export class TableViewItemAction extends ViewItemAction {
-  set actionView(view: String | HTMLElement) {
-    if (!view) {
-
-    } else if (typeof view == "string") {
-
-    } else {
-
-    }
+  hide() {
+    this._targetItem.render.setStyle(this._actionView, "visiblity", "none");
   }
-  get actionView(): String | HTMLElement {
+  show() {
+    this._targetItem.render.setStyle(this._actionView, "visiblity", "block");
+  }
+
+  set actionView(view: HTMLElement) {
+    this._actionView = view;
+  }
+  get actionView(): HTMLElement {
     return this._actionView;
   }
-  set actionEvent(event: ActionEvent) {
-    this._actionEvent = event;
-  }
-  get actionEvent(): ActionEvent {
-    return this._actionEvent;
-  }
-  set state(state: boolean) {
+
+  set state(state: any) {
     this._state = state;
-    this.actionEvent.callback(this);
+    this.onStateChanged(this);
   }
-  get state(): boolean {
+  get state(): any {
     return this._state;
   }
   set name(name: String) {
     this._name = name;
 
   }
+
   get name(): String {
     return this._name;
+  }
+
+  bindActionEvent(event: { name: String; callback(action: ViewItemAction): any; }, render?: Renderer2) {
+    render = render ? render : this._targetItem ? this._targetItem.render : render;
+    if (render) {
+      let fn = (data: any) => {
+        this._state = event.callback(this);
+      }
+      render.listen(this._actionView, event.name.toString(), fn);
+      this.onStateChanged = event.callback;
+    } else console.warn("Unable to bind view item action " + name + ": No render provided");
   }
 
 }
 
 export class TableViewItem extends ViewItem {
-
   cellDraw: Function = null;
-  _selectElement: HTMLElement;
-  set selectWrapper(selector: HTMLElement | String) {
-    if (typeof selector == "string") {
-      if (this.view instanceof HTMLElement) selector = <any>this.view.querySelector(selector);
-      else console.warn("connot select html element from Template");
-    }
-    if (selector) {
-      this.render.listen(selector, "click", (event) => {
-        //this._selected = true;
-      })
-    }
-  }
+
   set data(data: any) {
     if (this.view instanceof EmbeddedViewRef) {
 
     } else {
-      //if(this.view.nativeElement) check if view already datisfy
-      var select_td = this.render.createElement("td");
+
+      var select_td = this.render.createElement('td');
       this.render.appendChild(this.view, select_td);
-      //var actionEvent = new ViewItemAction(select_td,"select",);
-      var tvia = new TableViewItemAction(select_td, "select", this, false, {
-        name: "click", callback: (data) => {
-          if (data.state) {
-
-          } else {
-
-          }
-          data.state = !data.state;
+      this.render.addClass(select_td, "check-cell");
+      var input = this.render.createElement("input");
+      this.render.setAttribute(input, "data-style", "1");
+      this.render.setAttribute(input, "data-role", "checkbox");
+      this.render.appendChild(select_td, input);
+      this.render.setAttribute(input, "type", "checkbox");
+      this.render.setValue(input, "false");
+      var tvia = new TableViewItemAction(select_td, "select", this, false);
+      tvia.bindActionEvent({
+        name: "click", callback: (data = tvia) => {
+          var input = (<HTMLElement>data.targetItem.view).querySelector("input");
+          if (input) input.click();
+          console.log("selected", data.targetItem.data);
+          return !data.state;
         }
-      });
-
+      }, this.render);
+      this._actions.set("select", tvia);
       for (var key in data) {
         var info = data[key];
         var td = this.cellDraw ? this.cellDraw(info, key) : this.render.createElement("td");
@@ -93,7 +94,7 @@ export class TableViewItem extends ViewItem {
       var l_td = this.view.querySelectorAll("td");
       for (var j in l_td) {
         var td = l_td[j];
-        if (td == this._selectElement) continue;
+        //if (td == this._selectElement) continue;
         this._data.push(td.innerHTML);
       }
     }
@@ -106,8 +107,8 @@ export class TableViewItem extends ViewItem {
     return this._view;
   }
 
-  addAction(action: String | ViewItemAction) {
-    throw new Error('Method not implemented.');
+  addAction(action: ViewItemAction) {
+    this._actions.set(action.name, action);
   }
 
   deleteAction(action: String | ViewItemAction) {
@@ -122,9 +123,8 @@ export class TableViewItem extends ViewItem {
 
 }
 export class TableViewModel extends ViewModel {
-
+  selectionMode: "All" | "Exclusif" | "None";
   itemDraw: Function = null;
-
   loadFromHtml() {
     if (this.viewRoot instanceof ViewContainerRef) {
       console.warn("cannot load view from embneded view ");
@@ -150,7 +150,6 @@ export class TableViewModel extends ViewModel {
     if (this._items.length == 0) this.render.appendChild(this.viewRoot, this.emtyMessageView);
 
   }
-
 
   insertItem(item: ViewItem) {
     if (this._items.length == 0) this.render.removeChild(this.viewRoot, this.emtyMessageView);
@@ -179,6 +178,12 @@ export class TableViewModel extends ViewModel {
     return item;
   }
 
+  clearView() {
+    const childElements = (<ElementRef>this.viewRoot).nativeElement.children;
+    for (let child of childElements) {
+      this.render.removeChild(this.viewRoot, child);
+    }
+  }
 }
 
 @Directive({
@@ -204,8 +209,8 @@ export class DataTableDirective implements OnInit {
   @Input('header-source') header_source: any = null;
   @Input('ajax-data-source') ajax_data_source: AjaxSettings = null;
   @Input('ajax-header-source') ajax_header_source: AjaxSettings = null;
-  @Input("select-mode") _selectMode;
-
+  @Input('select-mode') selectMode: "ALL" | "EXCLUSIG" | "NONE";
+  @Input('numurated') numurated: boolean;
   @Output() onDraw = new EventEmitter;
   @Output() onDrawRow = new EventEmitter;
   @Output() onDrawCell = new EventEmitter;
@@ -248,15 +253,21 @@ export class DataTableDirective implements OnInit {
   paginationWrapper = null;
   dataSet: DataSet;
   viewModel: TableViewModel;
-  paginator: Paginator;
+  _paginator: Paginator;
   ngOnInit() {
     console.log("init");
     this._create();
   }
 
-  constructor(private table: ElementRef, private render: Renderer2, private ajax: AjaxService) {
+  constructor(private table?: ElementRef, private render?: Renderer2, private ajax?: AjaxService) {
   }
-
+  set paginator(p: Paginator) {
+    this.paginator = p;
+    if (this.viewModel) this.paginator.viewModel = this.viewModel;
+  }
+  get paginator() {
+    return this.paginator;
+  }
   _create() {
     this._init();
     this._setupheader();
@@ -310,6 +321,23 @@ export class DataTableDirective implements OnInit {
       }
 
       if (this.header_source != undefined) {
+        var select_all = this.render.createElement('td');
+        this.render.appendChild(tr, select_all);
+        this.render.addClass(select_all, "check-cell");
+        var input = this.render.createElement("input");
+        this.render.setAttribute(input, "data-style", "1");
+        this.render.setAttribute(input, "data-role", "checkbox");
+        this.render.appendChild(select_all, input);
+        this.render.setAttribute(input, "type", "checkbox");
+        this.render.setValue(input, "false");
+        this.render.listen(select_all, "click", (event) => {
+          this.viewModel.items.forEach((item, i) => {
+            console.log("select item", item);
+            if (item.getAction("select")) {
+              item.getAction("select").state = true;
+            }
+          })
+        })
         this.header_source.forEach((value, i) => {
           var th = this.heads[i];
           if (!th) {
@@ -333,6 +361,8 @@ export class DataTableDirective implements OnInit {
         })
       }
     }
+
+
   }
   _apply() {
     this.columns_directives.reset([...this.columns_directives.toArray(), this.heads]);
